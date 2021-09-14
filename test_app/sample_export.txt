@@ -1,3 +1,0 @@
- export HDF5_VOL_CONNECTOR="dset-split under_vol=0;under_info={}"
- export HDF5_PLUGIN_PATH=/home/royann/dataops-hdf5-splitfile
- export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/hdf5/lib:/usr/local/lib
