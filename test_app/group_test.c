@@ -372,7 +372,7 @@ main(void)
 
     printf("Scenario 3.3 Nested group - Negative testing - The following test should raise exceptions\n");
     printf("Scenario 3.3 Nested group - Path - Absolute path- where part of the path does not exist\n");
-    grp4 = H5Gcreate2(file, "/Ann/grp3", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    grp4 = H5Gcreate2(file, "/Nonexistent/grp3", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
 
     if(grp4 < 0)

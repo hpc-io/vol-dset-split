@@ -26,7 +26,7 @@
 
 /* Whether to display log messge when callback is invoked */
 /* (Uncomment to enable) */
-#define DEBUG 
+//#define DEBUG 
 //
 
 /* Hack for missing va_copy() in old Visual Studio editions
@@ -483,7 +483,9 @@ get_parent_file_fapl(void* file_obj, hid_t connector_id)
         HGOTO_ERROR(H5E_VOL, H5E_CANTGET, H5I_INVALID_HID, "can't get file access property list");
 
     ret_value = vol_cb_args.args.get_fapl.fapl_id;
+
     FUNC_RETURN_SET(ret_value);
+
     done:
         FUNC_LEAVE_VOL
 }
@@ -592,7 +594,7 @@ dset_split_file_create(const char* name, void* obj, H5I_type_t obj_type, hid_t c
     hid_t pfapl_id = get_parent_file_fapl(vol_obj_file, connector_id);
     hid_t fapl_id = H5Pcopy(pfapl_id);
 
-    file_id = H5Fcreate(name, H5F_ACC_TRUNC, fcpl_id, fapl_id);
+    file_id = H5Fcreate(name, H5F_ACC_EXCL, fcpl_id, fapl_id);
 	
     H5Pclose(fapl_id);
     H5Pclose(pfapl_id);
@@ -1479,7 +1481,7 @@ H5VL_dset_split_dataset_create(void *obj, const H5VL_loc_params_t *loc_params, c
     if(!dsetname)
         HGOTO_ERROR(H5E_VOL, H5E_INTERNAL, NULL, "Dataset name - get_dataset_name returned null value");
 
-    sprintf(file_name , "%s-%s-%ld%s", parent_name, dsetname, time(NULL), FILE_EXTENTION);
+    sprintf(file_name , "%s-%s-%ld%s", parent_name, dsetname, (time(NULL) + rand()), FILE_EXTENTION);
 
     if((file_id = dset_split_file_create(file_name, o->under_object, loc_params->obj_type, o->under_vol_id)) < 0 )
         HGOTO_ERROR(H5E_VOL, H5E_INTERNAL, NULL, "Dataset Splitfile creation failed");
@@ -1500,12 +1502,14 @@ H5VL_dset_split_dataset_create(void *obj, const H5VL_loc_params_t *loc_params, c
         HGOTO_ERROR(H5E_VOL, H5E_INTERNAL, NULL, "Link creation failed");
 
     under = dset_under;
+
     if(temp_path)
         free(temp_path);
     temp_path = NULL;
     if(parent_name)
         free(parent_name);
     parent_name = NULL;
+
     if (under)
     {
         dset = H5VL_dset_split_new_dataset_obj(under, o->under_vol_id, file_id, H5I_DATASET);

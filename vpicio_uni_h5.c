@@ -387,7 +387,6 @@ int main (int argc, char* argv[])
     free(id1);
     free(id2);
 
-
     MPI_Finalize();
     return 0;
 }
