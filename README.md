@@ -1,5 +1,5 @@
 # dset-split
-This Vol connector creates seperate sub files for each dataset created and mounts as external links to the main file.
+This Vol connector creates separate sub files for each dataset created and mounts those sub-files as external links in the main file.
 
 ## HDF5 Versioning with Data Version Control(DVC).
 
