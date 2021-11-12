@@ -6,7 +6,7 @@
 
 #include "hdf5.h"
 
-#define H5FILE_NAME "SDS.h5"
+#define H5FILE_NAME "dvc-test.h5"
 #define DATASETNAME "IntArray"
 #define NX          5 /* dataset dimensions */
 #define NY          6
@@ -47,34 +47,39 @@ main(void)
      * Describe the size of the array and create the data space for fixed
      * size dataset.
      */
-    dimsf[0]  = NX;
-    dimsf[1]  = NY;
-    dataspace = H5Screate_simple(RANK, dimsf, NULL);
+    for(i = 0; i< 10; i++)
+    {
+        dimsf[0]  = NX;
+        dimsf[1]  = NY;
+        dataspace = H5Screate_simple(RANK, dimsf, NULL);
 
-    /*
-     * Define datatype for the data in the file.
-     * We will store little endian INT numbers.
-     */
-    datatype = H5Tcopy(H5T_NATIVE_INT);
-    status   = H5Tset_order(datatype, H5T_ORDER_LE);
+        /*
+         * Define datatype for the data in the file.
+         * We will store little endian INT numbers.
+        */
+        datatype = H5Tcopy(H5T_NATIVE_INT);
+        status   = H5Tset_order(datatype, H5T_ORDER_LE);
 
-    /*
-     * Create a new dataset within the file using defined dataspace and
-     * datatype and default dataset creation properties.
-     */
-    dataset = H5Dcreate2(file, DATASETNAME, datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        /*
+        * Create a new dataset within the file using defined dataspace and
+        * datatype and default dataset creation properties.
+        */
+        char dsname[100];
+        sprintf(dsname, "%s-%d", DATASETNAME, i);
+        dataset = H5Dcreate2(file, dsname, datatype, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-    /*
-     * Write the data to the dataset using default transfer properties.
-     */
-    status = H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+        /*
+        * Write the data to the dataset using default transfer properties.
+        */
+        status = H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
 
-    /*
-     * Close/release resources.
-     */
-    H5Sclose(dataspace);
-    H5Tclose(datatype);
-    H5Dclose(dataset);
+        /*
+        * Close/release resources.
+        */
+        H5Sclose(dataspace);
+        H5Tclose(datatype);
+        H5Dclose(dataset);
+    }
     H5Fclose(file);
 
     return 0;

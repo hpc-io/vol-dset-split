@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
+#include <sys/stat.h>
 
 /* Public HDF5 file */
 #include "hdf5.h"
@@ -1422,6 +1424,44 @@ dset_get_normalized_name (char* name)
 }
 
 /*-------------------------------------------------------------------------
+ * Function:    dset_create_split_folder
+ *
+ * Purpose:     creates the folder to host the splitfiles
+ *
+ * Return:      Error - -1, Success - 0
+ *-------------------------------------------------------------------------
+ */
+herr_t
+dset_create_split_folder (char* name)
+{
+    struct stat info;
+    herr_t   ret_value = 0;
+    errno = 0;
+    if(mkdir(name, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0 && errno != EEXIST)
+    {
+        printf("Folder creation failed %s\n", name);
+        ret_value = -1;
+    }
+    if(errno == EEXIST)//Make sure its a directory
+    {
+       if(stat(name, &info) != 0)
+       {
+          printf("Cannot access %s\n", name);
+          ret_value = -1;
+       }
+       else if(info.st_mode & S_IFDIR)
+       {
+          ret_value = 0;
+       }
+       else
+       {
+          ret_value = -1;
+       }
+    }
+    return ret_value;
+}
+
+/*-------------------------------------------------------------------------
  * Function:    H5VL_dset_split_dataset_create
  *
  * Purpose:     Creates a dataset in a container
@@ -1445,13 +1485,14 @@ H5VL_dset_split_dataset_create(void *obj, const H5VL_loc_params_t *loc_params, c
     char* dsetname = NULL;;
     hid_t file_id;
     char file_name[1000] = {'\0'};
+    char* split_folder_name = NULL;
     herr_t status;
     char* temp_path = NULL;
     char* parent_name = NULL;
     H5VL_loc_params_t file_loc_params;
     herr_t ret;
     size_t size;
-	
+
 #ifdef DEBUG
     printf("DSET-SPLIT VOL DATASET Create\n");
 #endif
@@ -1462,14 +1503,19 @@ H5VL_dset_split_dataset_create(void *obj, const H5VL_loc_params_t *loc_params, c
     {
         parent_name = (char*)calloc(size + 1, sizeof(char));
         get_file_name(o->under_object, o->under_vol_id, loc_params->obj_type, parent_name,  size+1);
-        dset_get_normalized_name(parent_name);
+        dset_get_normalized_name(parent_name);	
+        split_folder_name = (char*)calloc(size + 7, sizeof(char));
+        sprintf(split_folder_name , "%s-%s", parent_name, "split" );
     }
     else
     {
-        parent_name = (char*)calloc(6, sizeof(char));
-        strcpy(parent_name, "Split");
+        split_folder_name = (char*)calloc(7, sizeof(char));
+        strcpy(split_folder_name, "split");
     }
-            
+
+    if (dset_create_split_folder(split_folder_name) < 0 )
+        HGOTO_ERROR(H5E_VOL, H5E_INTERNAL, NULL, "Folder creation failed");
+
     temp_path = (char*)calloc((strlen(name)+1), sizeof(char));
     if(!temp_path)
         HGOTO_ERROR(H5E_VOL, H5E_INTERNAL, NULL, "Memory allocation failed");
@@ -1481,7 +1527,7 @@ H5VL_dset_split_dataset_create(void *obj, const H5VL_loc_params_t *loc_params, c
     if(!dsetname)
         HGOTO_ERROR(H5E_VOL, H5E_INTERNAL, NULL, "Dataset name - get_dataset_name returned null value");
 
-    sprintf(file_name , "%s-%s-%ld%s", parent_name, dsetname, (time(NULL) + rand()), FILE_EXTENTION);
+    sprintf(file_name , "%s/%s-%ld%s", split_folder_name, dsetname, (time(NULL) + rand()), FILE_EXTENTION);
 
     if((file_id = dset_split_file_create(file_name, o->under_object, loc_params->obj_type, o->under_vol_id)) < 0 )
         HGOTO_ERROR(H5E_VOL, H5E_INTERNAL, NULL, "Dataset Splitfile creation failed");
@@ -1509,6 +1555,9 @@ H5VL_dset_split_dataset_create(void *obj, const H5VL_loc_params_t *loc_params, c
     if(parent_name)
         free(parent_name);
     parent_name = NULL;
+    if(split_folder_name)
+        free(split_folder_name);
+    split_folder_name = NULL;
 
     if (under)
     {
@@ -1520,15 +1569,18 @@ H5VL_dset_split_dataset_create(void *obj, const H5VL_loc_params_t *loc_params, c
     } /* end if */
     else
         dset = NULL;
-    
+
     FUNC_RETURN_SET(dset);
 
     done:
         if(temp_path)
             free(temp_path);
 
-	if(parent_name)
+        if(parent_name)
             free(parent_name);
+
+        if(split_folder_name)
+            free(split_folder_name);
 
     FUNC_LEAVE_VOL
 } /* end H5VL_dset_split_dataset_create() */
