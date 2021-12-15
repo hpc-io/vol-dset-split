@@ -12,7 +12,7 @@ TEST_C_FLAGS = -m64 -DUSE_V4_SSE -DOMPI_SKIP_MPICXX -DPARALLEL_IO
 TEST_LIB_FLAGS   = -L$(HDF5_BUILD_DIR)/src/.libs -L$(HDF5_DIR)/lib -L./ -lh5dsetsplit -lhdf5 -lz -lm -ldl
 TEST_SRC = vpicio_uni_h5.c
 TEST_BIN = vpicio_uni_h5
-
+.PHONY: all test clean
 all: makeso test
 
 debug:
@@ -23,4 +23,4 @@ makeso:
 test:
 	$(CC) -Wall -Wunused-parameter  -o $(TEST_BIN) $(CFLAGS) $(TEST_C_FLAGS) $(TEST_SRC)  $(TEST_LIB_FLAGS)
 clean:
-	rm -rf $(TEST_BIN) $(TARGET) *.h5 *.split
+	rm -rf $(TEST_BIN) $(TARGET) *.h5 *-split
